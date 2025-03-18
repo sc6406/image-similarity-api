@@ -24,23 +24,16 @@ def calculate_similarity(img1, img2):
     similarity = (features1 @ features2.T).item()
     return similarity
 
-@app.post("/compare-images/")
-async def compare_images(image1: UploadFile = File(...), image2: UploadFile = File(...)):
-    img1 = Image.open(io.BytesIO(await image1.read())).convert('RGB')
-    img2 = Image.open(io.BytesIO(await image2.read())).convert('RGB')
+@app.post("/check_similarity/")
+async def compare_image(file: UploadFile = File(...)):
+    preset_image = Image.open("product_reference.png").convert('RGB')
+    uploaded_image = Image.open(io.BytesIO(await file.read())).convert('RGB')
 
-    similarity = calculate_similarity(img1, img2)
+    similarity = calculate_similarity(preset_image, uploaded_image)
 
     if similarity > 0.9:
         message = "图片非常相似。"
-    elif similarity > 0.7:
-        message = "图片有一定相似度。"
     else:
-        message = "图片不相似。"
+        message = "图片不够相似。"
 
-    response = {
-        "similarity_score": round(similarity, 4),
-        "message": message
-    }
-
-    return JSONResponse(response)
+    return JSONResponse({"similarity": similarity, "message": message})
